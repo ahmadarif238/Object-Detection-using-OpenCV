@@ -4,13 +4,13 @@ import numpy as np
 from PIL import Image
 
 # Load the model
-config_file = "CV/ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
-frozen_model = "CV/frozen_inference_graph.pb"
+config_file = "ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
+frozen_model = "frozen_inference_graph.pb"
 model = cv2.dnn_DetectionModel(frozen_model, config_file)
 
 # Load class labels
 classLabels = []
-file_name = "CV/labels.txt"
+file_name = "labels.txt"
 with open(file_name, 'rt') as fpt:
     classLabels = fpt.read().rstrip('\n').split('\n')
 
