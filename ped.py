@@ -25,9 +25,12 @@ def detect_objects(image):
     ClassIndex, confidence, bbox = model.detect(img, confThreshold=0.5)
     if len(ClassIndex) > 0:
         for ClassInd, conf, boxes in zip(ClassIndex.flatten(), confidence.flatten(), bbox):
-            cv2.rectangle(img, boxes, (255, 0, 0), 2)
-            cv2.putText(img, classLabels[ClassInd - 1], (boxes[0] + 10, boxes[1] + 40), 
-                        cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
+            if 0 < ClassInd <= len(classLabels):  # Ensure ClassInd is within valid range
+                cv2.rectangle(img, boxes, (255, 0, 0), 2)
+                cv2.putText(img, classLabels[ClassInd - 1], (boxes[0] + 10, boxes[1] + 40), 
+                            cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
+            else:
+                print(f"Warning: ClassInd {ClassInd} is out of range")
     return img
 
 st.title("Object Detection App")
@@ -78,7 +81,6 @@ if cap is not None:
         stframe.image(frame, channels="BGR", use_column_width=True)
 
     cap.release()
-    #cv2.destroyAllWindows()
 
     # Reset the stop state
     st.session_state.stop = False
