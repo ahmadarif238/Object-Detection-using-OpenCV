@@ -61,8 +61,13 @@ if option == "Webcam":
             img = detect_objects(img)
             return img
 
-    webrtc_streamer(key="example", video_transformer_factory=VideoTransformer, 
-                    rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}))
+    webrtc_streamer(
+        key="example", 
+        video_transformer_factory=VideoTransformer, 
+        rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
+        media_stream_constraints={"video": True, "audio": False},  # Disable audio
+        video_html_attrs={"style": {"width": "100%"}}  # Make video element full width
+    )
 else:
     video_file = st.file_uploader("Choose a video file...", type=["mp4", "avi", "mov", "mpeg4"], key="video_upload")
     if video_file is not None:
