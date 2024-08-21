@@ -24,15 +24,12 @@ model.setInputSwapRB(True)
 def detect_objects(image):
     img = np.array(image)
     ClassIndex, confidence, bbox = model.detect(img, confThreshold=0.3)
-    print(f"ClassIndex: {ClassIndex}, Confidence: {confidence}, BBox: {bbox}")  # Debug print
     if len(ClassIndex) > 0:
         for ClassInd, conf, boxes in zip(ClassIndex.flatten(), confidence.flatten(), bbox):
             if 0 < ClassInd <= len(classLabels):  # Ensure ClassInd is within valid range
                 cv2.rectangle(img, boxes, (255, 0, 0), 2)
                 cv2.putText(img, classLabels[ClassInd - 1], (boxes[0] + 10, boxes[1] + 40), 
                             cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 3)
-            else:
-                print(f"Warning: ClassInd {ClassInd} is out of range")
     return img
 
 st.title("Object Detection App")
