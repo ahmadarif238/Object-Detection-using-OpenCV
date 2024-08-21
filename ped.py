@@ -4,6 +4,9 @@ import numpy as np
 from PIL import Image
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
 
+# Set page configuration for full width
+st.set_page_config(layout="wide")
+
 # Load the model
 config_file = "ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
 frozen_model = "frozen_inference_graph.pb"
@@ -24,6 +27,7 @@ model.setInputSwapRB(True)
 def detect_objects(image):
     img = np.array(image)
     ClassIndex, confidence, bbox = model.detect(img, confThreshold=0.3)
+    print(f"ClassIndex: {ClassIndex}, Confidence: {confidence}, BBox: {bbox}")  # Debug print
     if len(ClassIndex) > 0:
         for ClassInd, conf, boxes in zip(ClassIndex.flatten(), confidence.flatten(), bbox):
             if 0 < ClassInd <= len(classLabels):  # Ensure ClassInd is within valid range
