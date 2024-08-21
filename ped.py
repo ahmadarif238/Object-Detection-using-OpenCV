@@ -24,9 +24,9 @@ model.setInputScale(1.0 / 127.5)
 model.setInputMean((127.5, 127.5, 127.5))
 model.setInputSwapRB(True)
 
-def detect_objects(image):
+def detect_objects(image, conf_threshold):
     img = np.array(image)
-    ClassIndex, confidence, bbox = model.detect(img, confThreshold=0.3)
+    ClassIndex, confidence, bbox = model.detect(img, confThreshold=conf_threshold)
     print(f"ClassIndex: {ClassIndex}, Confidence: {confidence}, BBox: {bbox}")  # Debug print
     if len(ClassIndex) > 0:
         for ClassInd, conf, boxes in zip(ClassIndex.flatten(), confidence.flatten(), bbox):
@@ -38,6 +38,9 @@ def detect_objects(image):
 
 st.title("Object Detection App")
 
+# Confidence threshold slider
+conf_threshold = st.slider("Confidence threshold", 0.0, 1.0, 0.5, 0.05)
+
 # File uploader for image
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 if uploaded_file is not None:
@@ -45,7 +48,7 @@ if uploaded_file is not None:
     st.image(image, caption='Uploaded Image.', use_column_width=True)
     st.write("")
     st.write("Detecting objects...")
-    detected_image = detect_objects(image)
+    detected_image = detect_objects(image, conf_threshold)
     st.image(detected_image, caption='Detected Image.', use_column_width=True)
 
 # Video detection
@@ -56,14 +59,17 @@ option = st.selectbox("Choose input source", ("Webcam", "Video File"))
 
 if option == "Webcam":
     class VideoTransformer(VideoTransformerBase):
+        def __init__(self, conf_threshold):
+            self.conf_threshold = conf_threshold
+
         def transform(self, frame):
             img = frame.to_ndarray(format="bgr24")
-            img = detect_objects(img)
+            img = detect_objects(img, self.conf_threshold)
             return img
 
     webrtc_streamer(
         key="example", 
-        video_transformer_factory=VideoTransformer, 
+        video_transformer_factory=lambda: VideoTransformer(conf_threshold), 
         rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
         media_stream_constraints={"video": True, "audio": False},  # Disable audio
         video_html_attrs={"style": {"width": "100%"}}  # Make video element full width
@@ -80,6 +86,6 @@ else:
             ret, frame = cap.read()
             if not ret:
                 break
-            frame = detect_objects(frame)
+            frame = detect_objects(frame, conf_threshold)
             stframe.image(frame, channels="BGR", use_column_width=True)
         cap.release()
