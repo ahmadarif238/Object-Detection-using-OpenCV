@@ -2,6 +2,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
 
 # Load the model
 config_file = "ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
@@ -52,7 +53,14 @@ st.write("## Video Detection")
 option = st.selectbox("Choose input source", ("Webcam", "Video File"))
 
 if option == "Webcam":
-    cap = cv2.VideoCapture(0)
+    class VideoTransformer(VideoTransformerBase):
+        def transform(self, frame):
+            img = frame.to_ndarray(format="bgr24")
+            img = detect_objects(img)
+            return img
+
+    webrtc_streamer(key="example", video_transformer_factory=VideoTransformer, 
+                    rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}))
 else:
     video_file = st.file_uploader("Choose a video file...", type=["mp4", "avi", "mov", "mpeg4"], key="video_upload")
     if video_file is not None:
@@ -60,27 +68,11 @@ else:
         with open(video_path, 'wb') as out:
             out.write(video_file.read())
         cap = cv2.VideoCapture(video_path)
-    else:
-        cap = None
-
-# Initialize session state for stop button
-if 'stop' not in st.session_state:
-    st.session_state.stop = False
-
-if cap is not None:
-    stop_button = st.button("Stop")
-    if stop_button:
-        st.session_state.stop = True
-
-    stframe = st.empty()
-    while cap.isOpened() and not st.session_state.stop:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frame = detect_objects(frame)
-        stframe.image(frame, channels="BGR", use_column_width=True)
-
-    cap.release()
-
-    # Reset the stop state
-    st.session_state.stop = False
+        stframe = st.empty()
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frame = detect_objects(frame)
+            stframe.image(frame, channels="BGR", use_column_width=True)
+        cap.release()
